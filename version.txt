@@ -1,0 +1,15 @@
+============================================================
+ Version 1.0.0 (xx.xx.2021)
+============================================================
+ 
+ Brief:
+ - Initial implementation of PID controller
+ 
+ Features: 
+ - PID controller written to be used as instance
+ - Fully configurable in runtime
+ - Feed-forward option
+
+ Todo:
+ - 
+   
