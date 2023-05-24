@@ -22,7 +22,6 @@
 // Includes
 ////////////////////////////////////////////////////////////////////////////////
 #include <stdint.h>
-#include "project_config.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Definitions
@@ -34,6 +33,12 @@
 #define PID_VER_MAJOR		( 1 )
 #define PID_VER_MINOR		( 0 )
 #define PID_VER_DEVELOP		( 0 )
+
+/**
+ * Float 32-bit definition
+ */
+typedef float float32_t;
+
 
 /**
  * 	PID status

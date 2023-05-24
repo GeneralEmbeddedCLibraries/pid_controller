@@ -136,7 +136,15 @@ static inline float32_t pid_calc_p_part(const float32_t err, const float32_t kp)
 ////////////////////////////////////////////////////////////////////////////////
 static inline float32_t pid_calc_d_part(const float32_t err, const float32_t err_prev, const pid_cfg_t * const p_cfg)
 {
-	float32_t d 		= 0.0f;
+    float32_t d         = 0.0f;
+
+    // unused params
+    (void) err;
+    (void) err_prev;
+    (void) p_cfg;
+
+    //TODO: Needs to be implemented!
+	/*
 	float32_t err_dlt	= 0.0f;
 
 	if ( p_cfg->kd > 0.0f )
@@ -153,7 +161,7 @@ static inline float32_t pid_calc_d_part(const float32_t err, const float32_t err
 
 		// Apply time sample
 		d = ( d / p_cfg->ts );
-	}
+	}*/
 
 	return d;
 }
