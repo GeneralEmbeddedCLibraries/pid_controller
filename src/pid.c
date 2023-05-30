@@ -203,7 +203,8 @@ static inline float32_t pid_calc_p_ff_d(const float32_t p, const float32_t ff, c
 ////////////////////////////////////////////////////////////////////////////////
 static inline float32_t pid_calc_i_part(const float32_t err, const float32_t i_prev, const float32_t a_prev, const pid_cfg_t * const p_cfg)
 {
-	float32_t i = 0.0f;
+	float32_t i     = 0.0f;
+	float32_t i_lim = 0.0f;
 
 	// Apply integral coefficient
 	i = ( p_cfg->ki * err );
@@ -214,7 +215,11 @@ static inline float32_t pid_calc_i_part(const float32_t err, const float32_t i_p
 	// Accumulate previous integral and anti-windup part
 	i = ( i_prev + a_prev + i );
 
-	return i;
+	// Limit integral part
+	// NOTE: When exceeds max floating point number inf
+	i_lim = pid_limiter( i, 1e6f, -1e6f );
+
+	return i_lim;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -394,6 +399,11 @@ pid_status_t pid_is_init(p_pid_t pid_inst, bool * const p_is_init)
 * @return 		status		- Status of operation
 */
 ////////////////////////////////////////////////////////////////////////////////
+
+
+#include "math.h"
+#include "config/proj_cfg.h"
+
 pid_status_t pid_hndl(p_pid_t pid_inst, const pid_in_t * const p_in, pid_out_t * const p_out)
 {
 	pid_status_t status = ePID_OK;
@@ -411,20 +421,51 @@ pid_status_t pid_hndl(p_pid_t pid_inst, const pid_in_t * const p_in, pid_out_t *
 			// Calculate error
 			pid_inst->out.err = ( pid_inst->in.ref - pid_inst->in.act );
 
+		    if ( isnan( pid_inst->out.err ))
+		    {
+		        PROJ_CFG_ASSERT(0);
+		    }
+
 			// Calculate P part
 			pid_inst->out.p_part = pid_calc_p_part( pid_inst->out.err, pid_inst->cfg.kp );
+
+            if ( isnan( pid_inst->out.p_part ))
+            {
+                PROJ_CFG_ASSERT(0);
+            }
+
 
 			// Calculate D part
 			pid_inst->out.d_part = pid_calc_d_part( pid_inst->out.err, pid_inst->err_prev, &pid_inst->cfg );
 
+            if ( isnan( pid_inst->out.d_part ))
+            {
+                PROJ_CFG_ASSERT(0);
+            }
+
 			// Sum + limit P+FF+D
 			pid_inst->p_ff_d = pid_calc_p_ff_d( pid_inst->out.p_part, pid_inst->in.ff, pid_inst->out.d_part, &pid_inst->cfg );
+
+            if ( isnan( pid_inst->p_ff_d ))
+            {
+                PROJ_CFG_ASSERT(0);
+            }
 
 			// Calculate I part
 			pid_inst->out.i_part = pid_calc_i_part( pid_inst->out.err, pid_inst->i_prev, pid_inst->a_prev, &pid_inst->cfg );
 
+            if ( isnan( pid_inst->out.i_part ))
+            {
+                PROJ_CFG_ASSERT(0);
+            }
+
 			// Calculate and limit output + anti-windup
 			pid_inst->out.out = pid_calc_out( pid_inst->p_ff_d, pid_inst->out.i_part, &pid_inst->cfg, &pid_inst->a );
+
+            if ( isnan( pid_inst->out.out ))
+            {
+                PROJ_CFG_ASSERT(0);
+            }
 
 			// Copy output
 			memcpy( p_out, &pid_inst->out, sizeof( pid_out_t ));
