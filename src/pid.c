@@ -31,6 +31,13 @@
 #include <string.h>
 #include "pid.h"
 
+
+// TODO: Remove optimistaion to configuration file!
+
+// -Ofast implicitly applies O3 optimization
+#pragma GCC optimize ("-Ofast")
+#pragma GCC optimize ("-fno-unsafe-math-optimizations")
+
 ////////////////////////////////////////////////////////////////////////////////
 // Definitions
 ////////////////////////////////////////////////////////////////////////////////
@@ -511,6 +518,9 @@ pid_status_t pid_get_cfg(p_pid_t pid_inst, pid_cfg_t * const p_cfg)
 
 	return status;
 }
+
+// End of Ofast optimisation
+#pragma GCC reset_options
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
