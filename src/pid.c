@@ -331,19 +331,7 @@ pid_status_t pid_init(p_pid_t * p_inst, const pid_cfg_t * const p_cfg)
 				memcpy( &(*p_inst)->cfg, p_cfg, sizeof( pid_cfg_t ));
 
 				// Set to zero
-				(*p_inst)->in.act = 0.0f;
-				(*p_inst)->in.ref = 0.0f;
-				(*p_inst)->in.ff = 0.0f;
-
-				(*p_inst)->out.out = 0.0f;
-				(*p_inst)->out.err = 0.0f;
-				(*p_inst)->out.p_part = 0.0f;
-				(*p_inst)->out.i_part = 0.0f;
-				(*p_inst)->out.d_part = 0.0f;
-
-				(*p_inst)->err_prev = 0.0f;
-				(*p_inst)->i_prev = 0.0f;
-				(*p_inst)->a_prev = 0.0f;
+				(void) pid_reset( *p_inst );
 
 				// Init succeed
 				(*p_inst)->is_init = true;
@@ -517,6 +505,43 @@ pid_status_t pid_get_cfg(p_pid_t pid_inst, pid_cfg_t * const p_cfg)
 	}
 
 	return status;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+*   Reset PID controller
+*
+* @param[in]    pid_inst    - PID instance
+* @return       status      - Status of operation
+*/
+////////////////////////////////////////////////////////////////////////////////
+pid_status_t pid_reset(p_pid_t pid_inst)
+{
+    pid_status_t status = ePID_OK;
+
+    if ( NULL != pid_inst )
+    {
+        // Set to zero
+        pid_inst->in.act = 0.0f;
+        pid_inst->in.ref = 0.0f;
+        pid_inst->in.ff = 0.0f;
+
+        pid_inst->out.out = 0.0f;
+        pid_inst->out.err = 0.0f;
+        pid_inst->out.p_part = 0.0f;
+        pid_inst->out.i_part = 0.0f;
+        pid_inst->out.d_part = 0.0f;
+
+        pid_inst->err_prev = 0.0f;
+        pid_inst->i_prev = 0.0f;
+        pid_inst->a_prev = 0.0f;
+    }
+    else
+    {
+        status = ePID_ERROR;
+    }
+
+    return status;
 }
 
 // End of Ofast optimisation
