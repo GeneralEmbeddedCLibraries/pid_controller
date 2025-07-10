@@ -544,6 +544,70 @@ pid_status_t pid_reset(p_pid_t pid_inst)
     return status;
 }
 
+
+float32_t pid_get_out(p_pid_t pid_inst)
+{
+    float32_t out = 0.0f;
+
+    if ( NULL != pid_inst )
+    {
+        out = pid_inst->out.out;
+    }
+
+    return out;
+}
+
+float32_t pid_get_err(p_pid_t pid_inst)
+{
+    float32_t err = 0.0f;
+
+    if ( NULL != pid_inst )
+    {
+        err = pid_inst->out.err;
+    }
+
+    return err;
+}
+
+float32_t pid_get_p_part(p_pid_t pid_inst)
+{
+    float32_t p_part = 0.0f;
+
+    if ( NULL != pid_inst )
+    {
+        p_part = pid_inst->out.p_part;
+    }
+
+    return p_part;
+}
+
+float32_t pid_get_i_part(p_pid_t pid_inst)
+{
+    float32_t i_part = 0.0f;
+
+    if ( NULL != pid_inst )
+    {
+        i_part = pid_inst->out.i_part;
+    }
+
+    return i_part;
+}
+
+float32_t pid_get_d_part(p_pid_t pid_inst)
+{
+    float32_t d_part = 0.0f;
+
+    if ( NULL != pid_inst )
+    {
+        d_part = pid_inst->out.d_part;
+    }
+
+    return d_part;
+}
+
+
+
+
 // End of Ofast optimisation
 #pragma GCC reset_options
 

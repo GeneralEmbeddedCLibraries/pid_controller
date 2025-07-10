@@ -105,6 +105,12 @@ pid_status_t pid_set_cfg	(p_pid_t pid_inst, const pid_cfg_t * const p_cfg);
 pid_status_t pid_get_cfg	(p_pid_t pid_inst, pid_cfg_t * const p_cfg);
 pid_status_t pid_reset      (p_pid_t pid_inst);
 
+float32_t pid_get_out       (p_pid_t pid_inst);
+float32_t pid_get_err       (p_pid_t pid_inst);
+float32_t pid_get_p_part    (p_pid_t pid_inst);
+float32_t pid_get_i_part    (p_pid_t pid_inst);
+float32_t pid_get_d_part    (p_pid_t pid_inst);
+
 #endif // __PID_H
 
 ////////////////////////////////////////////////////////////////////////////////
