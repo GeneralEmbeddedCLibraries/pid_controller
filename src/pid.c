@@ -43,26 +43,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-/**
- * 	PID controler
- */
-typedef struct pid_s
-{
-	pid_cfg_t 	cfg;			/**<Controller configurations */
-	pid_in_t	in;				/**<Input data */
-	pid_out_t	out;			/**<Output data */
-	float32_t	err_prev;		/**<Previous error */
-	float32_t	i_prev;			/**<Previous value of integral part */
-	float32_t	a;				/**<Current value of anti-windup part */
-	float32_t	a_prev;			/**<Previous value of anti-windup part */
-	float32_t	p_ff_d;			/**<Summed & limited P+FF+D */
-	bool		is_init;		/**<Success initialization flag */
-
-	// TODO: Add filter for D part
-	// p_filter_rc_t	lpf_d;
-} pid_t;
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // Variables
 ////////////////////////////////////////////////////////////////////////////////
@@ -312,41 +292,31 @@ static bool	pid_check_cfg(const pid_cfg_t * const p_cfg)
 * @return 		status	- Status of initialization
 */
 ////////////////////////////////////////////////////////////////////////////////
-pid_status_t pid_init(p_pid_t * p_inst, const pid_cfg_t * const p_cfg)
+pid_status_t pid_init(p_pid_t pid_inst, const pid_cfg_t * const p_cfg)
 {
 	pid_status_t status = ePID_OK;
 
-	if 	(	( NULL != p_inst )
+	if 	(	( NULL != pid_inst )
 		&& 	( NULL != p_cfg ))
 	{
-		*p_inst = malloc( sizeof( pid_t ));
+        // Validate settings
+        if ( true == pid_check_cfg( p_cfg ))
+        {
+            // Copy settings
+            memcpy( &pid_inst->cfg, p_cfg, sizeof( pid_cfg_t ));
 
-		// Allocate succeed
-		if ( NULL != *p_inst )
-		{
-			// Validate settings
-			if ( true == pid_check_cfg( p_cfg ))
-			{
-				// Copy settings
-				memcpy( &(*p_inst)->cfg, p_cfg, sizeof( pid_cfg_t ));
+            // Set to zero
+            (void) pid_reset( pid_inst );
 
-				// Set to zero
-				(void) pid_reset( *p_inst );
-
-				// Init succeed
-				(*p_inst)->is_init = true;
-			}
-			else
-			{
-				// Init fail
-				(*p_inst)->is_init = false;
-				status = ePID_ERROR_CFG;
-			}
-		}
-		else
-		{
-			status = ePID_ERROR_INIT;
-		}
+            // Init succeed
+            pid_inst->is_init = true;
+        }
+        else
+        {
+            // Init fail
+            pid_inst->is_init = false;
+            status = ePID_ERROR_CFG;
+        }
 	}
 	else
 	{
