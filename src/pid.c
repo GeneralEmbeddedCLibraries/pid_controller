@@ -515,6 +515,74 @@ pid_status_t pid_reset(p_pid_t pid_inst)
 }
 
 
+
+pid_status_t pid_set_kp(p_pid_t pid_inst, const float32_t kp)
+{
+    pid_status_t status = ePID_OK;
+
+    if ( NULL != pid_inst )
+    {
+        pid_inst->cfg.kp = kp;
+    }
+    else
+    {
+        status = ePID_ERROR;
+    }
+
+    return status;
+}
+
+
+pid_status_t pid_set_ki(p_pid_t pid_inst, const float32_t ki)
+{
+    pid_status_t status = ePID_OK;
+
+    if ( NULL != pid_inst )
+    {
+        pid_inst->cfg.ki = ki;
+    }
+    else
+    {
+        status = ePID_ERROR;
+    }
+
+    return status;
+}
+
+pid_status_t pid_set_kd(p_pid_t pid_inst, const float32_t kd)
+{
+    pid_status_t status = ePID_OK;
+
+    if ( NULL != pid_inst )
+    {
+        pid_inst->cfg.kd = kd;
+    }
+    else
+    {
+        status = ePID_ERROR;
+    }
+
+    return status;
+}
+
+pid_status_t pid_set_kw(p_pid_t pid_inst, const float32_t kw)
+{
+    pid_status_t status = ePID_OK;
+
+    if ( NULL != pid_inst )
+    {
+        pid_inst->cfg.windup_k = kw;
+    }
+    else
+    {
+        status = ePID_ERROR;
+    }
+
+    return status;
+}
+
+
+
 float32_t pid_get_out(p_pid_t pid_inst)
 {
     float32_t out = 0.0f;

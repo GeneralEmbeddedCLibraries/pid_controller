@@ -123,6 +123,11 @@ pid_status_t pid_set_cfg	(p_pid_t pid_inst, const pid_cfg_t * const p_cfg);
 pid_status_t pid_get_cfg	(p_pid_t pid_inst, pid_cfg_t * const p_cfg);
 pid_status_t pid_reset      (p_pid_t pid_inst);
 
+pid_status_t pid_set_kp     (p_pid_t pid_inst, const float32_t kp);
+pid_status_t pid_set_ki     (p_pid_t pid_inst, const float32_t ki);
+pid_status_t pid_set_kd     (p_pid_t pid_inst, const float32_t kd);
+pid_status_t pid_set_kw     (p_pid_t pid_inst, const float32_t kw);
+
 float32_t pid_get_out       (p_pid_t pid_inst);
 float32_t pid_get_err       (p_pid_t pid_inst);
 float32_t pid_get_p_part    (p_pid_t pid_inst);
