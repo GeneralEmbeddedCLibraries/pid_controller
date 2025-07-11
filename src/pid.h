@@ -113,12 +113,16 @@ typedef struct
 typedef pid_t * p_pid_t;
 
 
+#include "config/proj_cfg.h"
+#define PID_ASSERT(_e)      PROJ_CFG_ASSERT(_e)
+
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
 ////////////////////////////////////////////////////////////////////////////////
 pid_status_t pid_init		(p_pid_t pid_inst, const pid_cfg_t * const p_cfg);
 pid_status_t pid_is_init	(p_pid_t pid_inst, bool * const p_is_init);
-pid_status_t pid_hndl		(p_pid_t pid_inst, const pid_in_t * const p_in, pid_out_t * const p_out);
+float32_t    pid_hndl       (p_pid_t pid_inst, const pid_in_t * const p_in);
+
 pid_status_t pid_set_cfg	(p_pid_t pid_inst, const pid_cfg_t * const p_cfg);
 pid_status_t pid_get_cfg	(p_pid_t pid_inst, pid_cfg_t * const p_cfg);
 pid_status_t pid_reset      (p_pid_t pid_inst);

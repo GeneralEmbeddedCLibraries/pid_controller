@@ -360,61 +360,42 @@ pid_status_t pid_is_init(p_pid_t pid_inst, bool * const p_is_init)
 *
 * @param[in] 	pid_inst	- PID instance
 * @param[in] 	p_in		- Pointer to input data
-* @param[in] 	p_out		- Pointer to output data
 * @return 		status		- Status of operation
 */
 ////////////////////////////////////////////////////////////////////////////////
-pid_status_t pid_hndl(p_pid_t pid_inst, const pid_in_t * const p_in, pid_out_t * const p_out)
+float32_t pid_hndl(p_pid_t pid_inst, const pid_in_t * const p_in)
 {
-	pid_status_t status = ePID_OK;
+	PID_ASSERT( true == pid_inst->is_init );
+	PID_ASSERT( NULL != pid_inst );
+	PID_ASSERT( NULL != p_in );
 
-	// Is initialized
-	if ( true == pid_inst->is_init )
-	{
-		if 	(	( NULL != pid_inst )
-			&&	( NULL != p_in )
-			&&	( NULL != p_out ))
-		{
-			// Copy input
-			memcpy( &pid_inst->in, p_in, sizeof( pid_in_t ));
+    // Copy input
+    memcpy( &pid_inst->in, p_in, sizeof( pid_in_t ));
 
-			// Calculate error
-			pid_inst->out.err = ( pid_inst->in.ref - pid_inst->in.act );
+    // Calculate error
+    pid_inst->out.err = ( pid_inst->in.ref - pid_inst->in.act );
 
-			// Calculate P part
-			pid_inst->out.p_part = pid_calc_p_part( pid_inst->out.err, pid_inst->cfg.kp );
+    // Calculate P part
+    pid_inst->out.p_part = pid_calc_p_part( pid_inst->out.err, pid_inst->cfg.kp );
 
-			// Calculate D part
-			pid_inst->out.d_part = pid_calc_d_part( pid_inst->out.err, pid_inst->err_prev, &pid_inst->cfg );
+    // Calculate D part
+    pid_inst->out.d_part = pid_calc_d_part( pid_inst->out.err, pid_inst->err_prev, &pid_inst->cfg );
 
-			// Sum + limit P+FF+D
-			pid_inst->p_ff_d = pid_calc_p_ff_d( pid_inst->out.p_part, pid_inst->in.ff, pid_inst->out.d_part, &pid_inst->cfg );
+    // Sum + limit P+FF+D
+    pid_inst->p_ff_d = pid_calc_p_ff_d( pid_inst->out.p_part, pid_inst->in.ff, pid_inst->out.d_part, &pid_inst->cfg );
 
-			// Calculate I part
-			pid_inst->out.i_part = pid_calc_i_part( pid_inst->out.err, pid_inst->i_prev, pid_inst->a_prev, &pid_inst->cfg );
+    // Calculate I part
+    pid_inst->out.i_part = pid_calc_i_part( pid_inst->out.err, pid_inst->i_prev, pid_inst->a_prev, &pid_inst->cfg );
 
-			// Calculate and limit output + anti-windup
-			pid_inst->out.out = pid_calc_out( pid_inst->p_ff_d, pid_inst->out.i_part, &pid_inst->cfg, &pid_inst->a );
+    // Calculate and limit output + anti-windup
+    pid_inst->out.out = pid_calc_out( pid_inst->p_ff_d, pid_inst->out.i_part, &pid_inst->cfg, &pid_inst->a );
 
-			// Copy output
-			memcpy( p_out, &pid_inst->out, sizeof( pid_out_t ));
+    // Store for next iteration
+    pid_inst->err_prev 	= pid_inst->out.err;
+    pid_inst->i_prev 	= pid_inst->out.i_part;
+    pid_inst->a_prev	= pid_inst->a;
 
-			// Store for next iteration
-			pid_inst->err_prev 	= pid_inst->out.err;
-			pid_inst->i_prev 	= pid_inst->out.i_part;
-			pid_inst->a_prev	= pid_inst->a;
-		}
-		else
-		{
-			status = ePID_ERROR;
-		}
-	}
-	else
-	{
-		status = ePID_ERROR_INIT;
-	}
-
-	return status;
+	return pid_inst->out.out;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
