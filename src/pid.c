@@ -1,19 +1,13 @@
-// Copyright (c) 2021 Ziga Miklosic
+// Copyright (c) 2025 Ziga Miklosic
 // All Rights Reserved
 // This software is under MIT licence (https://opensource.org/licenses/MIT)
 ////////////////////////////////////////////////////////////////////////////////
 /**
 *@file      pid.c
 *@brief     PID controller
-*@author    Ziga Miklosic
-*@date      17.08.2021
-*@version   V1.0.0
-*
-*
-*@section   Description
-*   
-*   PID controler module
-*
+*@mail      ziga.miklosic@gmail.com
+*@date      25.08.2025
+*@version   V1.1.0
 */
 ////////////////////////////////////////////////////////////////////////////////
 /*!
@@ -29,19 +23,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+
 #include "pid.h"
-
-
-// TODO: Remove optimistaion to configuration file!
-
-// -Ofast implicitly applies O3 optimization
-#pragma GCC optimize ("-Ofast")
-#pragma GCC optimize ("-fno-unsafe-math-optimizations")
 
 ////////////////////////////////////////////////////////////////////////////////
 // Definitions
 ////////////////////////////////////////////////////////////////////////////////
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Variables
@@ -50,7 +37,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Function prototypes
 ////////////////////////////////////////////////////////////////////////////////
-static inline float32_t pid_limiter		(const float32_t in, const float32_t max, const float32_t min);
 static inline float32_t pid_calc_p_part	(const float32_t err, const float32_t kp);
 static inline float32_t pid_calc_d_part	(const float32_t err, const float32_t err_prev, const pid_cfg_t * const p_cfg);
 static inline float32_t pid_calc_p_ff_d	(const float32_t p, const float32_t ff, const float32_t d, const pid_cfg_t * const p_cfg);
@@ -64,37 +50,7 @@ static bool				pid_check_cfg	(const pid_cfg_t * const p_cfg);
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
-*   Limit to min/max
-*
-* @param[in] 	in	- Input value to limit
-* @param[in] 	max	- Maximum allowed value
-* @param[in] 	min	- Minimum allowed value
-* @return 		out	- Output limited value
-*/
-////////////////////////////////////////////////////////////////////////////////
-static inline float32_t pid_limiter(const float32_t in, const float32_t max, const float32_t min)
-{
-	float32_t out = 0.0f;
-
-	if ( in > max )
-	{
-		out = max;
-	}
-	else if ( in < min )
-	{
-		out = min;
-	}
-	else
-	{
-		out = in;
-	}
-
-	return out;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-/**
-*   Calculate P part - PROPORTIONAL
+*   Calculate proportional (P) part
 *
 * @param[in] 	err - Error in reference and actual value
 * @param[in] 	kp	- Proportional coefficient
@@ -113,7 +69,7 @@ static inline float32_t pid_calc_p_part(const float32_t err, const float32_t kp)
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
-*   Calculate D part - DERIVATIVE
+*   Calculate derivative (D) part
 *
 * @param[in] 	err 		- Error in reference and actual value
 * @param[in] 	err_prev 	- Previous value of error
@@ -172,7 +128,7 @@ static inline float32_t pid_calc_p_ff_d(const float32_t p, const float32_t ff, c
 	p_ff_d = (( p + ff ) + d );
 
 	// Limit P+FF+D
-	p_ff_d = pid_limiter( p_ff_d, p_cfg->max, p_cfg->min );
+	p_ff_d = LIMIT( p_ff_d, p_cfg->min, p_cfg->max );
 
 	return p_ff_d;
 }
@@ -190,23 +146,13 @@ static inline float32_t pid_calc_p_ff_d(const float32_t p, const float32_t ff, c
 ////////////////////////////////////////////////////////////////////////////////
 static inline float32_t pid_calc_i_part(const float32_t err, const float32_t i_prev, const float32_t a_prev, const pid_cfg_t * const p_cfg)
 {
-	float32_t i     = 0.0f;
-	float32_t i_lim = 0.0f;
-
-	// Apply integral coefficient
-	i = ( p_cfg->ki * err );
-
-	// Apply time sample
-	i = ( p_cfg->ts * i );
+	// Calculate integral part
+	float32_t i = p_cfg->ki * err * p_cfg->ts;
 
 	// Accumulate previous integral and anti-windup part
-	i = ( i_prev + a_prev + i );
+	i += i_prev + a_prev;
 
-	// Limit integral part
-	// NOTE: When exceeds max floating point number inf
-	i_lim = pid_limiter( i, 1e6f, -1e6f );
-
-	return i_lim;
+	return i;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -222,21 +168,17 @@ static inline float32_t pid_calc_i_part(const float32_t err, const float32_t i_p
 ////////////////////////////////////////////////////////////////////////////////
 static inline float32_t pid_calc_out(const float32_t p_ff_d, const float32_t i, const pid_cfg_t * const p_cfg, float32_t * const p_a)
 {
-	float32_t out 			= 0.0f;
-	float32_t out_no_lim 	= 0.0f;
-	float32_t out_err		= 0.0f;
-
-	// Sum P+FF+D and I parts
-	out_no_lim = ( p_ff_d + i );
+    // Sum P+FF+D and I parts
+    const float32_t out_no_lim = p_ff_d + i;
 
 	// Limit
-	out = pid_limiter( out_no_lim, p_cfg->max, p_cfg->min );
+	const float32_t out = LIMIT( out_no_lim, p_cfg->min, p_cfg->max );
 
 	// Calculate out above limit
-	out_err = ( out - out_no_lim );
+	const float32_t out_over_saturation = out - out_no_lim;
 
 	// Calculate anti-windup value
-	*p_a = ( p_cfg->windup_k * out_err );
+	*p_a = 0.5f * out_over_saturation;
 
 	return out;
 }
@@ -285,14 +227,67 @@ static bool	pid_check_cfg(const pid_cfg_t * const p_cfg)
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
-*   Initialize PID controller
+*   Initialise PID controller
+*
+* @param[in]    p_inst  - Pointer to PID instance
+* @param[in]    p_cfg   - Pointer to controller configuration
+* @return       status  - Status of initialisation
+*/
+////////////////////////////////////////////////////////////////////////////////
+pid_status_t pid_init(p_pid_t * p_inst, const pid_cfg_t * const p_cfg)
+{
+    pid_status_t status = ePID_OK;
+
+    if  (   ( NULL != p_inst )
+        &&  ( NULL != p_cfg ))
+    {
+        *p_inst = malloc( sizeof( pid_t ));
+
+        // Allocate succeed
+        if ( NULL != *p_inst )
+        {
+            // Validate settings
+            if ( true == pid_check_cfg( p_cfg ))
+            {
+                // Copy settings
+                memcpy( &(*p_inst)->cfg, p_cfg, sizeof( pid_cfg_t ));
+
+                // Set to zero
+                (void) pid_reset( *p_inst );
+
+                // Init succeed
+                (*p_inst)->is_init = true;
+            }
+            else
+            {
+                // Init fail
+                (*p_inst)->is_init = false;
+                status = ePID_ERROR_CFG;
+            }
+        }
+        else
+        {
+            status = ePID_ERROR_INIT;
+        }
+    }
+    else
+    {
+        status = ePID_ERROR_INIT;
+    }
+
+    return status;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+*   Initialise statically PID controller
 *
 * @param[in] 	p_inst	- Pointer to PID instance
 * @param[in] 	p_cfg	- Pointer to controller configuration
-* @return 		status	- Status of initialization
+* @return 		status	- Status of initialisation
 */
 ////////////////////////////////////////////////////////////////////////////////
-pid_status_t pid_init(p_pid_t pid_inst, const pid_cfg_t * const p_cfg)
+pid_status_t pid_init_static(p_pid_t pid_inst, const pid_cfg_t * const p_cfg)
 {
 	pid_status_t status = ePID_OK;
 
@@ -365,10 +360,6 @@ pid_status_t pid_is_init(p_pid_t pid_inst, bool * const p_is_init)
 ////////////////////////////////////////////////////////////////////////////////
 float32_t pid_hndl(p_pid_t pid_inst, const pid_in_t * const p_in)
 {
-	PID_ASSERT( true == pid_inst->is_init );
-	PID_ASSERT( NULL != pid_inst );
-	PID_ASSERT( NULL != p_in );
-
     // Copy input
     memcpy( &pid_inst->in, p_in, sizeof( pid_in_t ));
 

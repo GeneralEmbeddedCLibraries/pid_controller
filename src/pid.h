@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Ziga Miklosic
+// Copyright (c) 2025 Ziga Miklosic
 // All Rights Reserved
 // This software is under MIT licence (https://opensource.org/licenses/MIT)
 ////////////////////////////////////////////////////////////////////////////////
@@ -6,8 +6,9 @@
 *@file      pid.h
 *@brief     PID controller
 *@author    Ziga Miklosic
-*@date      17.08.2021
-*@version   V1.0.0
+*@mail      ziga.miklosic@gmail.com
+*@date      25.08.2025
+*@version   V1.1.0
 */
 ////////////////////////////////////////////////////////////////////////////////
 /**
@@ -21,7 +22,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Includes
 ////////////////////////////////////////////////////////////////////////////////
+#include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+
+// Common goods
+#include "common/utils/src/utils.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Definitions
@@ -33,12 +40,6 @@
 #define PID_VER_MAJOR		( 1 )
 #define PID_VER_MINOR		( 0 )
 #define PID_VER_DEVELOP		( 0 )
-
-/**
- * Float 32-bit definition
- */
-typedef float float32_t;
-
 
 /**
  * 	PID status
@@ -90,9 +91,8 @@ typedef struct
 	float32_t d_part;	/**<Derivative part of PID controller */
 } pid_out_t;
 
-
 /**
- *  PID controler
+ *  PID controller
  */
 typedef struct
 {
@@ -112,14 +112,11 @@ typedef struct
 
 typedef pid_t * p_pid_t;
 
-
-#include "config/proj_cfg.h"
-#define PID_ASSERT(_e)      PROJ_CFG_ASSERT(_e)
-
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
 ////////////////////////////////////////////////////////////////////////////////
-pid_status_t pid_init		(p_pid_t pid_inst, const pid_cfg_t * const p_cfg);
+pid_status_t pid_init       (p_pid_t * p_inst, const pid_cfg_t * const p_cfg);
+pid_status_t pid_init_static(p_pid_t pid_inst, const pid_cfg_t * const p_cfg);
 pid_status_t pid_is_init	(p_pid_t pid_inst, bool * const p_is_init);
 float32_t    pid_hndl       (p_pid_t pid_inst, const pid_in_t * const p_in);
 
