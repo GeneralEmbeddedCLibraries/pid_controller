@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Ziga Miklosic
+// Copyright (c) 2025 Ziga Miklosic
 // All Rights Reserved
 // This software is under MIT licence (https://opensource.org/licenses/MIT)
 ////////////////////////////////////////////////////////////////////////////////
@@ -6,8 +6,9 @@
 *@file      pid.h
 *@brief     PID controller
 *@author    Ziga Miklosic
-*@date      17.08.2021
-*@version   V1.0.0
+*@mail      ziga.miklosic@gmail.com
+*@date      25.08.2025
+*@version   V1.1.0
 */
 ////////////////////////////////////////////////////////////////////////////////
 /**
@@ -21,7 +22,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Includes
 ////////////////////////////////////////////////////////////////////////////////
+#include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+
+// Common goods
+#include "common/utils/src/utils.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Definitions
@@ -33,12 +40,6 @@
 #define PID_VER_MAJOR		( 1 )
 #define PID_VER_MINOR		( 0 )
 #define PID_VER_DEVELOP		( 0 )
-
-/**
- * Float 32-bit definition
- */
-typedef float float32_t;
-
 
 /**
  * 	PID status
@@ -91,19 +92,42 @@ typedef struct
 } pid_out_t;
 
 /**
- * 	Pointer to PID instance
+ *  PID controller
  */
-typedef struct pid_s * p_pid_t;
+typedef struct
+{
+    pid_cfg_t   cfg;            /**<Controller configurations */
+    pid_in_t    in;             /**<Input data */
+    pid_out_t   out;            /**<Output data */
+    float32_t   err_prev;       /**<Previous error */
+    float32_t   i_prev;         /**<Previous value of integral part */
+    float32_t   a;              /**<Current value of anti-windup part */
+    float32_t   a_prev;         /**<Previous value of anti-windup part */
+    float32_t   p_ff_d;         /**<Summed & limited P+FF+D */
+    bool        is_init;        /**<Success initialization flag */
+
+    // TODO: Add filter for D part
+    // p_filter_rc_t    lpf_d;
+} pid_t;
+
+typedef pid_t * p_pid_t;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
 ////////////////////////////////////////////////////////////////////////////////
-pid_status_t pid_init		(p_pid_t * p_inst, const pid_cfg_t * const p_cfg);
+pid_status_t pid_init       (p_pid_t * p_inst, const pid_cfg_t * const p_cfg);
+pid_status_t pid_init_static(p_pid_t pid_inst, const pid_cfg_t * const p_cfg);
 pid_status_t pid_is_init	(p_pid_t pid_inst, bool * const p_is_init);
-pid_status_t pid_hndl		(p_pid_t pid_inst, const pid_in_t * const p_in, pid_out_t * const p_out);
+float32_t    pid_hndl       (p_pid_t pid_inst, const pid_in_t * const p_in);
+
 pid_status_t pid_set_cfg	(p_pid_t pid_inst, const pid_cfg_t * const p_cfg);
 pid_status_t pid_get_cfg	(p_pid_t pid_inst, pid_cfg_t * const p_cfg);
 pid_status_t pid_reset      (p_pid_t pid_inst);
+
+pid_status_t pid_set_kp     (p_pid_t pid_inst, const float32_t kp);
+pid_status_t pid_set_ki     (p_pid_t pid_inst, const float32_t ki);
+pid_status_t pid_set_kd     (p_pid_t pid_inst, const float32_t kd);
+pid_status_t pid_set_kw     (p_pid_t pid_inst, const float32_t kw);
 
 float32_t pid_get_out       (p_pid_t pid_inst);
 float32_t pid_get_err       (p_pid_t pid_inst);
