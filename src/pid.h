@@ -57,14 +57,19 @@ typedef enum
  */
 typedef struct
 {
+    float32_t   ts;         /**<Time sample - period of main handler */
 	float32_t	kp;			/**<Proportional coeficient */
 	float32_t	ki;			/**<Integral coeficient */
 	float32_t	kd;			/**<Derivitive coeficient */
-	float32_t	ts;			/**<Time sample - period of main handler */
 	float32_t	min;		/**<Minimum value of output */
 	float32_t	max;		/**<Maximum value of output */
-	float32_t	lpf_d_fc;	/**<Cutoff freq of LPF for derivative part */
-	float32_t 	windup_k;	/**<Anti-Windup coefficient */
+
+	/**<Derivate part low pass filter (LPF) */
+	struct
+	{
+	    float32_t fc;       /**<Cutoff freq of LPF for derivative part */
+	    float32_t alpha;    /**<LPF (RC) alpha */
+	} lpf_d;
 } pid_cfg_t;
 
 /**
@@ -127,7 +132,6 @@ pid_status_t pid_reset      (p_pid_t pid_inst);
 pid_status_t pid_set_kp     (p_pid_t pid_inst, const float32_t kp);
 pid_status_t pid_set_ki     (p_pid_t pid_inst, const float32_t ki);
 pid_status_t pid_set_kd     (p_pid_t pid_inst, const float32_t kd);
-pid_status_t pid_set_kw     (p_pid_t pid_inst, const float32_t kw);
 
 float32_t pid_get_out       (p_pid_t pid_inst);
 float32_t pid_get_err       (p_pid_t pid_inst);

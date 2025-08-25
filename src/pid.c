@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <math.h>
 
 #include "pid.h"
 
@@ -37,12 +38,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Function prototypes
 ////////////////////////////////////////////////////////////////////////////////
-static inline float32_t pid_calc_p_part	(const float32_t err, const float32_t kp);
-static inline float32_t pid_calc_d_part	(const float32_t err, const float32_t err_prev, const pid_cfg_t * const p_cfg);
-static inline float32_t pid_calc_p_ff_d	(const float32_t p, const float32_t ff, const float32_t d, const pid_cfg_t * const p_cfg);
-static inline float32_t pid_calc_i_part	(const float32_t err, const float32_t i_prev, const float32_t a_prev, const pid_cfg_t * const p_cfg);
-static inline float32_t	pid_calc_out	(const float32_t p_ff_d, const float32_t i, const pid_cfg_t * const p_cfg, float32_t * const p_a);
-static bool				pid_check_cfg	(const pid_cfg_t * const p_cfg);
+static inline float32_t pid_calc_p_part	        (const float32_t err, const float32_t kp);
+static inline float32_t pid_calc_d_part         (p_pid_t pid_inst);
+static inline float32_t pid_calc_p_ff_d	        (const float32_t p, const float32_t ff, const float32_t d, const pid_cfg_t * const p_cfg);
+static inline float32_t pid_calc_i_part	        (const float32_t err, const float32_t i_prev, const float32_t a_prev, const pid_cfg_t * const p_cfg);
+static inline float32_t	pid_calc_out	        (const float32_t p_ff_d, const float32_t i, const pid_cfg_t * const p_cfg, float32_t * const p_a);
+static bool				pid_check_cfg	        (const pid_cfg_t * const p_cfg);
+static bool             pid_rc_calculate_alpha  (const float32_t fc, const float32_t fs, float32_t * const p_alpha);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
@@ -77,34 +79,24 @@ static inline float32_t pid_calc_p_part(const float32_t err, const float32_t kp)
 * @return 		d			- D part of controller
 */
 ////////////////////////////////////////////////////////////////////////////////
-static inline float32_t pid_calc_d_part(const float32_t err, const float32_t err_prev, const pid_cfg_t * const p_cfg)
+static inline float32_t pid_calc_d_part(p_pid_t pid_inst)
 {
-    float32_t d         = 0.0f;
+    float32_t d = 0.0f;
 
-    // unused params
-    (void) err;
-    (void) err_prev;
-    (void) p_cfg;
-
-    //TODO: Needs to be implemented!
-	/*
-	float32_t err_dlt	= 0.0f;
-
-	if ( p_cfg->kd > 0.0f )
+	if ( pid_inst->cfg.kd > 0.0f )
 	{
 		// Calculate error change
-		err_dlt = ( err - err_prev );
+		const float32_t err_dlt = ( pid_inst->out.err - pid_inst->err_prev );
 
 		// Apply LPF
-		// TODO: ...
-		// d = filter_rc_hndl( ..., err_dlt );
+		d += ( pid_inst->cfg.lpf_d.alpha * ( err_dlt - d ));
 
 		// Multiply with D coefficient
-		d = ( p_cfg->kd * d );
+		d = ( pid_inst->cfg.kd * d );
 
 		// Apply time sample
-		d = ( d / p_cfg->ts );
-	}*/
+		d = ( d / pid_inst->cfg.ts );
+	}
 
 	return d;
 }
@@ -212,6 +204,32 @@ static bool	pid_check_cfg(const pid_cfg_t * const p_cfg)
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
+*       Calculate RC LPF alpha
+*
+* @param[in]    fc      - Cutoff frequency
+* @param[in]    fs      - Sample frequency
+* @param[out]   alpha   - CR alpha
+* @return       true if alpha is calculated
+*/
+////////////////////////////////////////////////////////////////////////////////
+static bool pid_rc_calculate_alpha(const float32_t fc, const float32_t fs, float32_t * const p_alpha)
+{
+    // Check Nyquist/Shannon sampling theorem
+    if  (   ( fc < ( fs / 2.0f ))
+        &&  ( p_alpha != NULL ))
+    {
+        *p_alpha = (float32_t) ( 1.0f / ( 1.0f + ( fs / ( M_TWOPI * fc ))));
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/**
 * @} <!-- END GROUP -->
 */
 ////////////////////////////////////////////////////////////////////////////////
@@ -251,6 +269,9 @@ pid_status_t pid_init(p_pid_t * p_inst, const pid_cfg_t * const p_cfg)
             {
                 // Copy settings
                 memcpy( &(*p_inst)->cfg, p_cfg, sizeof( pid_cfg_t ));
+
+                // Calculate derivative LPF
+                pid_rc_calculate_alpha( p_cfg->lpf_d.fc, (float32_t)( 1.0f / p_cfg->ts ), &((*p_inst)->cfg.lpf_d.alpha ));
 
                 // Set to zero
                 (void) pid_reset( *p_inst );
@@ -370,7 +391,7 @@ float32_t pid_hndl(p_pid_t pid_inst, const pid_in_t * const p_in)
     pid_inst->out.p_part = pid_calc_p_part( pid_inst->out.err, pid_inst->cfg.kp );
 
     // Calculate D part
-    pid_inst->out.d_part = pid_calc_d_part( pid_inst->out.err, pid_inst->err_prev, &pid_inst->cfg );
+    pid_inst->out.d_part = pid_calc_d_part( pid_inst );
 
     // Sum + limit P+FF+D
     pid_inst->p_ff_d = pid_calc_p_ff_d( pid_inst->out.p_part, pid_inst->in.ff, pid_inst->out.d_part, &pid_inst->cfg );
@@ -463,20 +484,7 @@ pid_status_t pid_reset(p_pid_t pid_inst)
 
     if ( NULL != pid_inst )
     {
-        // Set to zero
-        pid_inst->in.act = 0.0f;
-        pid_inst->in.ref = 0.0f;
-        pid_inst->in.ff = 0.0f;
-
-        pid_inst->out.out = 0.0f;
-        pid_inst->out.err = 0.0f;
-        pid_inst->out.p_part = 0.0f;
-        pid_inst->out.i_part = 0.0f;
-        pid_inst->out.d_part = 0.0f;
-
-        pid_inst->err_prev = 0.0f;
-        pid_inst->i_prev = 0.0f;
-        pid_inst->a_prev = 0.0f;
+        memset( pid_inst, 0U, sizeof(pid_t));
     }
     else
     {
@@ -537,21 +545,6 @@ pid_status_t pid_set_kd(p_pid_t pid_inst, const float32_t kd)
     return status;
 }
 
-pid_status_t pid_set_kw(p_pid_t pid_inst, const float32_t kw)
-{
-    pid_status_t status = ePID_OK;
-
-    if ( NULL != pid_inst )
-    {
-        pid_inst->cfg.windup_k = kw;
-    }
-    else
-    {
-        status = ePID_ERROR;
-    }
-
-    return status;
-}
 
 
 
@@ -615,11 +608,6 @@ float32_t pid_get_d_part(p_pid_t pid_inst)
     return d_part;
 }
 
-
-
-
-// End of Ofast optimisation
-#pragma GCC reset_options
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
