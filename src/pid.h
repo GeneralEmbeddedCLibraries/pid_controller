@@ -8,7 +8,7 @@
 *@author    Ziga Miklosic
 *@mail      ziga.miklosic@gmail.com
 *@date      25.08.2025
-*@version   V1.1.0
+*@version   V1.0.0
 */
 ////////////////////////////////////////////////////////////////////////////////
 /**
@@ -108,11 +108,12 @@ typedef struct
     float32_t   i_prev;         /**<Previous value of integral part */
     float32_t   a;              /**<Current value of anti-windup part */
     float32_t   a_prev;         /**<Previous value of anti-windup part */
+    float32_t   act_filt;       /**<Filtered actual input */
+    float32_t   act_filt_prev;  /**<Previous value of filtered act input*/
     float32_t   p_ff_d;         /**<Summed & limited P+FF+D */
-    bool        is_init;        /**<Success initialization flag */
-
-    // TODO: Add filter for D part
-    // p_filter_rc_t    lpf_d;
+    float32_t   ki_ts;          /**<Precalculated Ki*ts */
+    float32_t   kd_ts;          /**<Precalculated Kd/ts */
+    bool        is_init;        /**<Success initialisation flag */
 } pid_t;
 
 typedef pid_t * p_pid_t;
