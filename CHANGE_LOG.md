@@ -11,8 +11,11 @@ and this project/module adheres to [Semantic Versioning](https://semver.org/spec
  - PID controller written to be used as instance
  - Dual init option: dynamically and statically
  - Fully configurable in runtime
- - Feed-forward option
- - Integral anti windup
- - Derivative part on measurement signal
+ - Support for **derivative on measurement** (no setpoint kick).  
+ - Optional **low-pass filter (LPF)** for derivative term with configurable cutoff frequency.  
+ - **Feed-forward input** included in the control law.  
+ - `pid_set_d_lpf_fc()` API to adjust derivative LPF cutoff at runtime.  
+ - New API functions for min/max setters: `pid_set_min()`, `pid_set_max()`.   
+ - Telemetry accessors for P/I/D parts: `pid_get_p_part()`, `pid_get_i_part()`, `pid_get_d_part()`.  
 
 ---
