@@ -61,7 +61,16 @@ static inline float32_t pid_calc_d_part(p_pid_t pid_inst)
 	{
         // Filter
         float32_t act_filt;
-        filter_rc_hndl( &pid_inst->d_lpf, pid_inst->in.act, &act_filt );
+        if ( pid_inst->cfg.d_lpf_fc > 0.0f )
+        {
+            filter_rc_hndl( &pid_inst->d_lpf, pid_inst->in.act, &act_filt );
+        }
+
+        // Filter disabled
+        else
+        {
+            act_filt = pid_inst->in.act;
+        }
 
         // Calculate difference
         const float32_t act_dlt = act_filt - pid_inst->act_prev;
