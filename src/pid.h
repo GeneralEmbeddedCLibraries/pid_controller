@@ -115,13 +115,13 @@ typedef pid_t * p_pid_t;
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
 ////////////////////////////////////////////////////////////////////////////////
-pid_status_t pid_init           (p_pid_t * pid_inst, const pid_cfg_t * const p_cfg);
-pid_status_t pid_init_static    (p_pid_t pid_inst, const pid_cfg_t * const p_cfg);
-bool         pid_is_init	    (p_pid_t pid_inst);
-float32_t    pid_hndl           (p_pid_t pid_inst, const pid_in_t * const p_in);
-pid_status_t pid_set_cfg	    (p_pid_t pid_inst, const pid_cfg_t * const p_cfg);
-pid_cfg_t *  pid_get_cfg	    (p_pid_t pid_inst);
-pid_status_t pid_reset          (p_pid_t pid_inst);
+pid_status_t      pid_init          (p_pid_t * pid_inst, const pid_cfg_t * const p_cfg);
+pid_status_t      pid_init_static   (p_pid_t pid_inst, const pid_cfg_t * const p_cfg);
+bool              pid_is_init	    (p_pid_t pid_inst);
+float32_t         pid_hndl          (p_pid_t pid_inst, const pid_in_t * const p_in);
+pid_status_t      pid_set_cfg	    (p_pid_t pid_inst, const pid_cfg_t * const p_cfg);
+const pid_cfg_t * pid_get_cfg	    (p_pid_t pid_inst);
+pid_status_t      pid_reset         (p_pid_t pid_inst);
 
 pid_status_t pid_set_kp         (p_pid_t pid_inst, const float32_t kp);
 float32_t    pid_get_kp         (p_pid_t pid_inst);
@@ -133,7 +133,7 @@ pid_status_t pid_set_min        (p_pid_t pid_inst, const float32_t min);
 float32_t    pid_get_min        (p_pid_t pid_inst);
 pid_status_t pid_set_max        (p_pid_t pid_inst, const float32_t max);
 float32_t    pid_get_max        (p_pid_t pid_inst);
-pid_status_t pid_set_d_lpf_fc   (p_pid_t pid_inst, const float32_t max);
+pid_status_t pid_set_d_lpf_fc   (p_pid_t pid_inst, const float32_t fc);
 float32_t    pid_get_d_lpf_fc   (p_pid_t pid_inst);
 
 float32_t    pid_get_out        (p_pid_t pid_inst);

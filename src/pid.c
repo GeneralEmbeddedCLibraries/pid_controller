@@ -299,7 +299,7 @@ float32_t pid_hndl(p_pid_t pid_inst, const pid_in_t * const p_in)
     pid_inst->out.d_part = pid_calc_d_part( pid_inst );
 
     // Sum + limit P+FF+D
-    const float32_t p_ff_d = LIMIT(( pid_inst->out.p_part + pid_inst->in.ff + pid_inst->out.d_part ), pid_inst->cfg.min, pid_inst->cfg.max );
+    const float32_t p_ff_d = pid_inst->out.p_part + pid_inst->in.ff + pid_inst->out.d_part;
 
     // Calculate I part + anti-windup part
     pid_inst->out.i_part += ( pid_inst->ki_ts * pid_inst->out.err ) - pid_inst->aw;
@@ -328,7 +328,7 @@ float32_t pid_hndl(p_pid_t pid_inst, const pid_in_t * const p_in)
 pid_status_t pid_set_cfg(p_pid_t pid_inst, const pid_cfg_t * const p_cfg)
 {
     if ((pid_inst == NULL) || (p_cfg == NULL))  return ePID_ERROR;
-    if ( true == pid_inst->is_init )            return ePID_ERROR_INIT;
+    if ( true != pid_inst->is_init )            return ePID_ERROR_INIT;
 
     // Get new configs
     memcpy( &pid_inst->cfg, p_cfg, sizeof( pid_cfg_t ));
@@ -336,7 +336,7 @@ pid_status_t pid_set_cfg(p_pid_t pid_inst, const pid_cfg_t * const p_cfg)
 
     if ( eFILTER_OK != filter_rc_fc_set( &pid_inst->d_lpf, pid_inst->cfg.d_lpf_fc ))
     {
-        return ePID_ERROR;
+        return ePID_ERROR_CFG;
     }
     else
     {
@@ -352,7 +352,7 @@ pid_status_t pid_set_cfg(p_pid_t pid_inst, const pid_cfg_t * const p_cfg)
 * @return 		p_cfg    - Pointer to controller configuration
 */
 ////////////////////////////////////////////////////////////////////////////////
-pid_cfg_t * pid_get_cfg(p_pid_t pid_inst)
+const pid_cfg_t * pid_get_cfg(p_pid_t pid_inst)
 {
 	if ( NULL != pid_inst )
 	{
@@ -389,8 +389,8 @@ pid_status_t pid_reset(p_pid_t pid_inst)
         pid_inst->out.d_part = 0.0f;
         pid_inst->aw         = 0.0f;
 
-        // Initialize LPF state to current measurement to avoid startup D spike
-        pid_inst->act_prev      = pid_inst->in.act;
+        // Initialise LPF state to current measurement to avoid startup D spike
+        pid_inst->act_prev = pid_inst->in.act;
         filter_rc_reset( &pid_inst->d_lpf, pid_inst->in.act );
 
         return ePID_OK;
@@ -419,7 +419,7 @@ pid_status_t pid_set_kp(p_pid_t pid_inst, const float32_t kp)
     }
     else
     {
-        return ePID_ERROR;
+        return ePID_ERROR_CFG;
     }
 }
 
@@ -462,7 +462,7 @@ pid_status_t pid_set_ki(p_pid_t pid_inst, const float32_t ki)
     }
     else
     {
-        return ePID_ERROR;
+        return ePID_ERROR_CFG;
     }
 }
 
@@ -505,7 +505,7 @@ pid_status_t pid_set_kd(p_pid_t pid_inst, const float32_t kd)
     }
     else
     {
-        return ePID_ERROR;
+        return ePID_ERROR_CFG;
     }
 }
 
@@ -547,7 +547,7 @@ pid_status_t pid_set_min(p_pid_t pid_inst, const float32_t min)
     }
     else
     {
-        return ePID_ERROR;
+        return ePID_ERROR_CFG;
     }
 }
 
@@ -589,7 +589,7 @@ pid_status_t pid_set_max(p_pid_t pid_inst, const float32_t max)
     }
     else
     {
-        return ePID_ERROR;
+        return ePID_ERROR_CFG;
     }
 }
 
@@ -633,7 +633,7 @@ pid_status_t pid_set_d_lpf_fc(p_pid_t pid_inst, const float32_t fc)
         }
         else
         {
-            return ePID_ERROR;
+            return ePID_ERROR_CFG;
         }
     }
     else
