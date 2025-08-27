@@ -1,9 +1,17 @@
-# PID Controller
-C code implementation of PID controller for general embedded application. 
+# **PID Controller**
+Tiny, fast, and portable **PID controller in C** for embedded systems.  
+Designed for deterministic, low-overhead control loops with optional feed-forward, filtered derivative, and robust anti-windup.
 
-PID controller are written in such way that can be used as individual instances with no relations between the at all.
+## ✨ Features
 
-PID controller memory space is dynamically allocated and success of allocation is taken into consideration before using that instance. Deallocation on exsisting controller instance is not supported as it's not good practice to free memory in C world.
+- **P + I + D (on measurement)** → no setpoint kick; derivative operates on the measured value.  
+- **First-order LPF on D** → configurable cutoff frequency, state reset to avoid startup spikes.  
+- **Single saturation point** → only the final output is clamped, ensuring predictable behavior.  
+- **Back-calculation anti-windup** → integral state unwinds quickly when saturated.  
+- **Feed-forward input** for model-based enhancements.  
+- **Precomputed gains** → `Ki*Ts` and `Kd/Ts` calculated once at init for minimal runtime math.  
+- **Instance-based API** → multiple controllers supported, either dynamically or statically allocated.  
+- **MIT Licensed**.
 
 Top level diagram:
 
@@ -60,60 +68,46 @@ root/middleware/pid_controller/"module_space"
 | **pid_get_d_part**        | Get PID controller D part                 | float32_t pid_get_d_part(p_pid_t pid_inst) |
 
 
-## Example of usage
----
+## **Usage**
 
 ```C
-/**
- * 	Current regulator
- */
-static p_pid_t 	g_current_ctrl = NULL;
+#include "pid.h"
 
-/**
- * 	Current regulator settings
- *  
- * @note    Main handler is being process every 1ms (1kHz)! 
- */
-static pid_cfg_t g_current_ctrl_cfg = 
-{
-    .kp 		= 1.0f,
-	.ki 		= 10.0f,
-	.kd 		= 0.0f,
-	.ts 		= 1e-3f,
-	.min 		= 0.0f,
-	.max		= 1.0f,
-	.d_lpf_fc	= 0.0f,
+// Controller instance (dynamic or static)
+static p_pid_t pid = NULL;
+
+// Controller configuration (1 kHz loop)
+static const pid_cfg_t cfg = {
+    .kp       = 1.0f,
+    .ki       = 10.0f,
+    .kd       = 0.0f,     // set >0 to enable D
+    .ts       = 1e-3f,    // 1 kHz
+    .min      = 0.0f,
+    .max      = 1.0f,
+    .d_lpf_fc = 0.0f      // set >0 to enable derivative LPF
 };
 
-/**
- *  Controller input/output data
- */
-static pid_in_t  in;
-static pid_out_t out;
-
-@init
+int app_init(void)
 {
-    // Init current controler
-    if ( ePID_OK != pid_init( &g_current_ctrl, &g_current_ctrl_cfg ))
-    {
-        // Initialization failed
-        // Further actions here...
+    if (ePID_OK != pid_init(&pid, &cfg)) {
+        // handle error
+        return -1;
     }
+    return 0;
 }
 
-@1kHz period
+void control_loop_1kHz(void)
 {
-    // Fill input data
-    in.act = ...
-    in.ref = ...
-    in.ff = ...
+    pid_in_t in = {
+        .ref = /* setpoint */,
+        .act = /* measurement */,
+        .ff  = /* feed-forward (optional) */
+    };
 
-    // Handle PID controller
-	out = pid_hndl( g_current_ctrl, &in );
+    // Compute control output
+    const float32_t u = pid_hndl(pid, &in);
 
-    // Use output data here...
-    // Output value: out.out
+    // Apply output u to actuator...
 }
-
 ```
 
