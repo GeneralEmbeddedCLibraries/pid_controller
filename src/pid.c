@@ -23,7 +23,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
-#include <math.h>
 
 #include "pid.h"
 
@@ -168,6 +167,7 @@ pid_status_t pid_init(p_pid_t * pid_inst, const pid_cfg_t * const p_cfg)
     // Check for valid configuration
     if ( false == pid_check_cfg( p_cfg ))
     {
+        free( *pid_inst );
         return ePID_ERROR_CFG;
     }
 
@@ -193,6 +193,7 @@ pid_status_t pid_init(p_pid_t * pid_inst, const pid_cfg_t * const p_cfg)
     }
     else
     {
+        free( *pid_inst );
         return ePID_ERROR_CFG;
     }
 }
@@ -275,7 +276,7 @@ bool pid_is_init(p_pid_t pid_inst)
 *
 * @param[in]    pid_inst - PID controller instance
 * @param[in] 	p_in     - Pointer to input data
-* @return 		status   - Status of operation
+* @return 		PID controller output
 */
 ////////////////////////////////////////////////////////////////////////////////
 float32_t pid_hndl(p_pid_t pid_inst, const pid_in_t * const p_in)
@@ -310,7 +311,7 @@ float32_t pid_hndl(p_pid_t pid_inst, const pid_in_t * const p_in)
     pid_inst->out.out = LIMIT( out_no_lim, pid_inst->cfg.min, pid_inst->cfg.max );
 
     // Calculate anti-windup value
-    pid_inst->aw = pid_inst->ki_ts * ( pid_inst->out.out - out_no_lim );
+    pid_inst->aw = pid_inst->ki_ts * ( out_no_lim - pid_inst->out.out );
 
 	return pid_inst->out.out;
 }
@@ -326,34 +327,21 @@ float32_t pid_hndl(p_pid_t pid_inst, const pid_in_t * const p_in)
 ////////////////////////////////////////////////////////////////////////////////
 pid_status_t pid_set_cfg(p_pid_t pid_inst, const pid_cfg_t * const p_cfg)
 {
-	pid_status_t status = ePID_OK;
+    if ((pid_inst == NULL) || (p_cfg == NULL))  return ePID_ERROR;
+    if ( true == pid_inst->is_init )            return ePID_ERROR_INIT;
 
-	// Is initialized
-	if ( true == pid_inst->is_init )
-	{
-		if 	(	( NULL != pid_inst )
-			&&	( NULL != p_cfg ))
-		{
-			memcpy( &pid_inst->cfg, p_cfg, sizeof( pid_cfg_t ));
+    // Get new configs
+    memcpy( &pid_inst->cfg, p_cfg, sizeof( pid_cfg_t ));
+    pid_precalculate( pid_inst );
 
-			pid_precalculate( pid_inst );
-
-			if ( eFILTER_OK != filter_rc_fc_set( &pid_inst->d_lpf, pid_inst->cfg.kd ))
-			{
-			    status = ePID_ERROR;
-			}
-		}
-		else
-		{
-			status = ePID_ERROR;
-		}
-	}
-	else
-	{
-		status = ePID_ERROR_INIT;
-	}
-
-	return status;
+    if ( eFILTER_OK != filter_rc_fc_set( &pid_inst->d_lpf, pid_inst->cfg.d_lpf_fc ))
+    {
+        return ePID_ERROR;
+    }
+    else
+    {
+        return ePID_OK;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -640,6 +628,7 @@ pid_status_t pid_set_d_lpf_fc(p_pid_t pid_inst, const float32_t fc)
     {
         if ( eFILTER_OK == filter_rc_fc_set( &pid_inst->d_lpf, fc ))
         {
+            pid_inst->cfg.d_lpf_fc = fc;
             return ePID_OK;
         }
         else
