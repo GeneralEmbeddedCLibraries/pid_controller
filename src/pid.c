@@ -239,8 +239,12 @@ pid_status_t pid_init_static(p_pid_t pid_inst, const pid_cfg_t * const p_cfg)
     // Setup memory for D part LPF
     pid_inst->d_lpf.p_y = &pid_inst->d_lpf_mem;
 
+    // Setup D part LPF fc
+    // NOTE: As filter module doesn't allow fc equals 0, thus setting it to max. allowed fc=fs/2!
+    const float32_t fc = ( 0.0f == p_cfg->d_lpf_fc ) ? ( 0.5f / p_cfg->ts ) : p_cfg->d_lpf_fc;
+
     // Initialized D part LPF
-    if ( eFILTER_OK == filter_rc_init_static( &pid_inst->d_lpf, p_cfg->d_lpf_fc, ( 1.0f / p_cfg->ts ), 1U, 0.0f ))
+    if ( eFILTER_OK == filter_rc_init_static( &pid_inst->d_lpf, fc, ( 1.0f / p_cfg->ts ), 1U, 0.0f ))
     {
         // Set to zero
         (void) pid_reset( pid_inst );
@@ -343,7 +347,7 @@ pid_status_t pid_set_cfg(p_pid_t pid_inst, const pid_cfg_t * const p_cfg)
     memcpy( &pid_inst->cfg, p_cfg, sizeof( pid_cfg_t ));
     pid_precalculate( pid_inst );
 
-    if ( eFILTER_OK != filter_rc_fc_set( &pid_inst->d_lpf, pid_inst->cfg.d_lpf_fc ))
+    if ( eFILTER_OK != filter_rc_set_fc( &pid_inst->d_lpf, pid_inst->cfg.d_lpf_fc ))
     {
         return ePID_ERROR_CFG;
     }
@@ -635,7 +639,7 @@ pid_status_t pid_set_d_lpf_fc(p_pid_t pid_inst, const float32_t fc)
 {
     if ( NULL != pid_inst )
     {
-        if ( eFILTER_OK == filter_rc_fc_set( &pid_inst->d_lpf, fc ))
+        if ( eFILTER_OK == filter_rc_set_fc( &pid_inst->d_lpf, fc ))
         {
             pid_inst->cfg.d_lpf_fc = fc;
             return ePID_OK;
