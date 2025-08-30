@@ -63,7 +63,7 @@ static inline float32_t pid_calc_d_part(p_pid_t pid_inst)
         float32_t act_filt;
         if ( pid_inst->cfg.d_lpf_fc > 0.0f )
         {
-            filter_rc_hndl( &pid_inst->d_lpf, pid_inst->in.act, &act_filt );
+            act_filt = filter_rc_hndl( &pid_inst->d_lpf, pid_inst->in.act );
         }
 
         // Filter disabled
