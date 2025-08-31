@@ -23,13 +23,13 @@ Top level diagram:
 ### **1. Utils Module**
 [Utils](https://github.com/GeneralEmbeddedCLibraries/utils) module must take following path:
 ```
-"root/common/utils/src/utils.h"
+root/common/utils/src/utils.h
 ```
 
 ### **2. Filter Module**
 [Filter](https://github.com/GeneralEmbeddedCLibraries/filter) module must take following path:
 ```
-"root/middleware/filter/src/filter.h"
+root/middleware/filter/src/filter.h
 ```
 
 ## **General Embedded C Libraries Ecosystem**

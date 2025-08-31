@@ -241,7 +241,7 @@ pid_status_t pid_init_static(p_pid_t pid_inst, const pid_cfg_t * const p_cfg)
 
     // Setup D part LPF fc
     // NOTE: As filter module doesn't allow fc equals 0, thus setting it to max. allowed fc=fs/2!
-    const float32_t fc = ( 0.0f == p_cfg->d_lpf_fc ) ? ( 0.5f / p_cfg->ts ) : p_cfg->d_lpf_fc;
+    const float32_t fc = ( 0.0f == p_cfg->d_lpf_fc ) ? ( 0.49f / p_cfg->ts ) : p_cfg->d_lpf_fc;
 
     // Initialized D part LPF
     if ( eFILTER_OK == filter_rc_init_static( &pid_inst->d_lpf, fc, ( 1.0f / p_cfg->ts ), 1U, 0.0f ))
