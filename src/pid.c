@@ -544,6 +544,26 @@ pid_status_t pid_reset(p_pid_t pid_inst)
     return status;
 }
 
+pid_status_t pid_reset_integral(p_pid_t pid_inst)
+{
+    pid_status_t status = ePID_OK;
+
+    if ( NULL != pid_inst )
+    {
+
+        pid_inst->out.i_part = 0.0f;
+        pid_inst->err_prev = 0.0f;
+        pid_inst->i_prev = 0.0f;
+        pid_inst->a_prev = 0.0f;
+    }
+    else
+    {
+        status = ePID_ERROR;
+    }
+
+    return status;
+}
+
 // End of Ofast optimisation
 #pragma GCC reset_options
 

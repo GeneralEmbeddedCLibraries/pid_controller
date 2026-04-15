@@ -105,6 +105,8 @@ pid_status_t pid_set_cfg	(p_pid_t pid_inst, const pid_cfg_t * const p_cfg);
 pid_status_t pid_get_cfg	(p_pid_t pid_inst, pid_cfg_t * const p_cfg);
 pid_status_t pid_reset      (p_pid_t pid_inst);
 
+pid_status_t pid_reset_integral(p_pid_t pid_inst);
+
 #endif // __PID_H
 
 ////////////////////////////////////////////////////////////////////////////////
