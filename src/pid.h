@@ -61,7 +61,7 @@ typedef uint8_t pid_status_t;
  */
 typedef struct
 {
-    float32_t ts;       /**<Time sample - period of main handler */
+    float32_t ts;       /**<Time sample in sec - period of main handler */
 	float32_t kp;	    /**<Proportional coefficient */
 	float32_t ki;	    /**<Integral coefficient */
 	float32_t kd;	    /**<Derivitive coefficient */
