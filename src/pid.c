@@ -59,6 +59,15 @@ static inline float32_t pid_calc_d_part(p_pid_t pid_inst)
 
 	if ( pid_inst->cfg.kd > 0.0f )
 	{
+        // First sample after reset or after D part enabled
+        // NOTE: Start from current measurement to avoid D part spike!
+        if ( pid_inst->d_reinit )
+        {
+            filter_rc_reset( &pid_inst->d_lpf, pid_inst->in.act );
+            pid_inst->act_prev = pid_inst->in.act;
+            pid_inst->d_reinit = false;
+        }
+
         // Filter
         float32_t act_filt;
         if ( pid_inst->cfg.d_lpf_fc > 0.0f )
@@ -81,7 +90,8 @@ static inline float32_t pid_calc_d_part(p_pid_t pid_inst)
 	}
 	else
 	{
-	    filter_rc_reset( &pid_inst->d_lpf, pid_inst->in.act );
+	    // D part disabled -> re-initialise its state once enabled
+	    pid_inst->d_reinit = true;
 	}
 
 	return d;
@@ -402,9 +412,10 @@ pid_status_t pid_reset(p_pid_t pid_inst)
         pid_inst->out.d_part = 0.0f;
         pid_inst->aw         = 0.0f;
 
-        // Initialise LPF state to current measurement to avoid startup D spike
-        pid_inst->act_prev = pid_inst->in.act;
-        filter_rc_reset( &pid_inst->d_lpf, pid_inst->in.act );
+        // Initialise D part state from next measurement to avoid startup D spike
+        // NOTE: Current measurement is not known here, it arrives with next pid_hndl()!
+        pid_inst->act_prev = 0.0f;
+        pid_inst->d_reinit = true;
 
         return ePID_OK;
     }

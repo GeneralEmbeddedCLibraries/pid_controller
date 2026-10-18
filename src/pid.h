@@ -108,6 +108,7 @@ typedef struct
     float32_t   ki_ts;      /**<Precalculated Ki*ts */
     float32_t   kd_ts;      /**<Precalculated Kd/ts */
     float32_t   aw;         /**<Anti-windup value */
+    bool        d_reinit;   /**<Re-initialise D part state from next measurement */
     bool        is_init;    /**<Success initialisation flag */
 } pid_t;
 typedef pid_t * p_pid_t;
